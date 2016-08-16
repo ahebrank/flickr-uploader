@@ -342,31 +342,6 @@ class Uploadr:
                 print(str(sys.exc_info()))
             return False
 
-    def removeDeletedMedia( self ):
-        """ Remove files deleted at the local source
-        loop through database
-        check if file exists
-        if exists, continue
-        if not exists, delete photo from fickr
-        http://www.flickr.com/services/api/flickr.photos.delete.html
-        """
-
-        print("*****Removing deleted files*****")
-
-        if ( not self.checkToken() ):
-            self.authenticate()
-        con = lite.connect(DB_PATH)
-        con.text_factory = str
-
-        with con:
-            cur = con.cursor()
-            cur.execute("SELECT files_id, path FROM files")
-            rows = cur.fetchall()
-
-            for row in rows:
-                if( not os.path.isfile(row[1])):
-                    success = self.deleteFile(row, cur)
-        print("*****Completed deleted files*****")
 
     def upload( self ):
         """ upload
@@ -396,6 +371,8 @@ class Uploadr:
             if args.drip_feed and success and i != changedMedia_count-1:
                 print("Waiting " + str(DRIP_TIME) + " seconds before next upload")
                 time.sleep( DRIP_TIME )
+            if success:
+                os.remove(file)
             coun = coun + 1;
             if (coun%100 == 0):
                 print("   " + str(coun) + " files processed (uploaded, md5ed or timestamp checked)")
@@ -1018,7 +995,6 @@ if __name__ == "__main__":
         flick.getFlickrSets()
         flick.convertRawFiles()
         flick.upload()
-        flick.removeDeletedMedia()
         flick.createSets()
         flick.addTagsToUploadedPhotos()
 print("--------- End time: " + time.strftime("%c") + " ---------");
